@@ -56,27 +56,30 @@ def lambda_handler(event, context):
     secret_dict = get_secret()
 
     weather_data = get_weather(secret_dict)
-    location_name = weather_data['location']['name']
 
-    result = [
-        {
-            "day": i,
-            "location_name": location_name,
-            "temperature_min": day_data["values"]["temperatureMin"],
-            "temperature_max": day_data["values"]["temperatureMax"],
-            "cloud_cover_avg": day_data["values"]["cloudCoverAvg"],
-            "precip_probability_avg": day_data["values"]["precipitationProbabilityAvg"],
-            "rain_intensity_avg": day_data["values"]["rainIntensityAvg"],
-            "weather_code_min": day_data["values"]["weatherCodeMin"],
-            "weather_code_max": day_data["values"]["weatherCodeMax"]
-        }
-        for i, day_data in enumerate(weather_data["timelines"]["daily"], start=1)
-    ]
+    for i, day_data in enumerate(weather_data["timelines"]["daily"], start=1):
+        values = day_data["values"]
+        day = i,
+        # location_name = location_name,
+        temperature_min = values["temperatureMin"],
+        temperature_max = values["temperatureMax"],
+        cloud_cover_avg = values["cloudCoverAvg"],
+        precip_probability_avg = values["precipitationProbabilityAvg"],
+        rain_intensity_avg = values["rainIntensityAvg"],
+        weather_code_min = values["weatherCodeMin"],
+        weather_code_max = values["weatherCodeMax"]
 
-    #insert_query_data = (request_time, location_name, temperature, cloud_cover, precip_probability, rain_intensity, weather_code)
+        print(day)
+        # print(location_name)
+        print(temperature_min)
+        print(temperature_max)
+    # location_name = weather_data['location']['name']
+    # temperature = weather_data['data']['values']['temperature']
+
+    # insert_query_data = (request_time, location_name, temperature, cloud_cover, precip_probability, rain_intensity, weather_code)
 
     db_connection = connect_to_db(secret_dict)
-   # insert_into_db(db_connection, insert_query, insert_query_data)
+    # insert_into_db(db_connection, insert_query, insert_query_data)
     db_connection.close()
 
     return {
