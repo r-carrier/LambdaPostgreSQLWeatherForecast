@@ -54,35 +54,30 @@ def insert_into_db(conn, query, data):
 
 def lambda_handler(event, context):
     secret_dict = get_secret()
-
     weather_data = get_weather(secret_dict)
+    db_connection = connect_to_db(secret_dict)
+    location_name = weather_data['location']['name']
 
     for i, day_data in enumerate(weather_data["timelines"]["daily"], start=1):
         values = day_data["values"]
-        day = i,
-        # location_name = location_name,
-        temperature_min = values["temperatureMin"],
-        temperature_max = values["temperatureMax"],
-        cloud_cover_avg = values["cloudCoverAvg"],
-        precip_probability_avg = values["precipitationProbabilityAvg"],
-        rain_intensity_avg = values["rainIntensityAvg"],
-        weather_code_min = values["weatherCodeMin"],
-        weather_code_max = values["weatherCodeMax"]
+        data_to_insert = (
+            request_time,
+            i,  # day *** modify this to insert date, so current day is 1, tomorrow is 2 etc...
+            location_name,
+            values.get("temperatureMin"),
+            values.get("temperatureMax"),
+            values.get("cloudCoverAvg"),
+            values.get("precipitationProbabilityAvg"),
+            values.get("rainIntensityAvg"),
+            values.get("weatherCodeMin"),
+            values.get("weatherCodeMax")
+        )
+        insert_into_db(db_connection, insert_query, data_to_insert)
 
-        print(day)
-        # print(location_name)
-        print(temperature_min)
-        print(temperature_max)
-    # location_name = weather_data['location']['name']
-    # temperature = weather_data['data']['values']['temperature']
-
-    # insert_query_data = (request_time, location_name, temperature, cloud_cover, precip_probability, rain_intensity, weather_code)
-
-    db_connection = connect_to_db(secret_dict)
-    # insert_into_db(db_connection, insert_query, insert_query_data)
     db_connection.close()
 
     return {
         'statusCode': 200,
-        'body': json.dumps('Hello from Lambda!')
+        'body': json.dumps('Weather data successfully inserted!')
     }
+
