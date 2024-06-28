@@ -2,13 +2,13 @@ import psycopg2
 from psycopg2 import sql
 import json
 import urllib3
-from botocore.config import Config
 import boto3
+from datetime import datetime, timedelta
 
 secret_name = 'fishing-secrets'
 insert_query = '''
     insert into fw1.t_forecast
-    (request_date, day, location_name, temperature_min, temperature_max, cloud_cover_avg, precip_probability_avg, rain_intensity_avg, weather_code_min, weather_code_max)
+    (request_date, forecast_date, location_name, temperature_min, temperature_max, cloud_cover_avg, precip_probability_avg, rain_intensity_avg, weather_code_min, weather_code_max)
     values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     '''
 request_time = 'NOW()'
@@ -50,6 +50,7 @@ def insert_into_db(conn, query, data):
     cur = conn.cursor()
     cur.execute(query, data)
     conn.commit()
+    cur.close()
 
 
 def lambda_handler(event, context):
@@ -57,12 +58,16 @@ def lambda_handler(event, context):
     weather_data = get_weather(secret_dict)
     db_connection = connect_to_db(secret_dict)
     location_name = weather_data['location']['name']
+    request_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    for i, day_data in enumerate(weather_data["timelines"]["daily"], start=1):
+    current_date = datetime.now()
+
+    for i, day_data in enumerate(weather_data["timelines"]["daily"], start=0):
         values = day_data["values"]
+        forecast_date = day_data["time"]
         data_to_insert = (
             request_time,
-            i,  # day *** modify this to insert date, so current day is 1, tomorrow is 2 etc...
+            forecast_date,
             location_name,
             values.get("temperatureMin"),
             values.get("temperatureMax"),
